@@ -1,0 +1,14 @@
+picf -- Desktop Picture Frame
+=============================
+
+This is the simplest picture frame for on your desktop.
+
+Install
+=======
+
+git clone ...
+cd picf
+cmake CMakeList.txt
+make
+sudo make install
+
