@@ -97,17 +97,7 @@ public class FloatWindow : Gtk.Window {
         });
         
         
-        configure_event.connect ((e) => {
-            ignore_reposition = true;
-            settings.set ("position", "(ii)", e.x, e.y);
-            ignore_reposition = false;
-            
-            ignore_resize = true;
-            settings.set ("size", "(ii)", e.width, e.height);
-            ignore_resize = false;
-            
-            return false;
-        });
+        configure_event.connect (on_configure);
 
         settings.changed["path"].connect (() => {
             queue_draw ();
@@ -140,6 +130,19 @@ public class FloatWindow : Gtk.Window {
         set_default_size (width, height);
     }
     
+    private bool on_configure (Gdk.EventConfigure e) {
+        ignore_reposition = true;
+        settings.set ("position", "(ii)", e.x, e.y);
+        ignore_reposition = false;
+        
+        ignore_resize = true;
+        settings.set ("size", "(ii)", e.width, e.height);
+        ignore_resize = false;
+        
+        queue_draw ();
+        return false;
+    }
+    
     private bool on_draw (Context ctx) {
         string path = settings.get_string ("path");
 
@@ -147,13 +150,20 @@ public class FloatWindow : Gtk.Window {
         get_size (out window_width, out window_height);
 
         try {
-            Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file_at_scale (path, window_width, window_height, true);
+            Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file_at_scale (path, window_width,
+                    window_height, true);
             Gdk.cairo_set_source_pixbuf (ctx, pixbuf, 0, 0);
 
             int image_width = pixbuf.get_width();
             int image_height = pixbuf.get_height();
             if (window_width != image_width || window_height != image_height)
                 resize(image_width, image_height);
+            
+            Gdk.Geometry geometry = Gdk.Geometry ();
+            geometry.min_aspect = (double)image_width/(double)image_height;
+            geometry.max_aspect = (double)image_width/(double)image_height;
+            set_geometry_hints (null, geometry, Gdk.WindowHints.ASPECT);
+
         } catch (GLib.Error err) {
             stderr.printf("Error\n");
         }
