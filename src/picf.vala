@@ -17,6 +17,7 @@
 
 using GLib;
 using Gtk;
+using Gdk;
 using Cairo;
 
 public class PicfSettings : GLib.Settings {
@@ -32,6 +33,8 @@ public class FloatWindow : Gtk.Window {
     
     bool ignore_reposition = false;
     bool ignore_resize = false;
+    
+    Pixbuf pixbuf = null;
 
     public FloatWindow () {
         Object(type: Gtk.WindowType.TOPLEVEL);
@@ -130,6 +133,14 @@ public class FloatWindow : Gtk.Window {
         set_default_size (width, height);
     }
     
+    private void update_geometry_hints () {
+        double aspect = (double)pixbuf.width/(double)pixbuf.height;
+
+        Gdk.Geometry geometry = Gdk.Geometry ();
+        geometry.min_aspect = geometry.max_aspect = aspect;
+        set_geometry_hints (null, geometry, Gdk.WindowHints.ASPECT);
+    }
+    
     private bool on_configure (Gdk.EventConfigure e) {
         ignore_reposition = true;
         settings.set ("position", "(ii)", e.x, e.y);
@@ -139,33 +150,32 @@ public class FloatWindow : Gtk.Window {
         settings.set ("size", "(ii)", e.width, e.height);
         ignore_resize = false;
         
+        try {
+            string path = settings.get_string ("path");
+            pixbuf = new Gdk.Pixbuf.from_file_at_scale (path, e.width, e.height, true);
+            update_geometry_hints ();
+        } catch (GLib.Error err) {
+            stderr.printf("Error\n");
+        }
+        
         queue_draw ();
         return false;
     }
     
     private bool on_draw (Context ctx) {
-        string path = settings.get_string ("path");
+    
+        if (pixbuf == null)
+            return false;
 
         int window_width, window_height;
         get_size (out window_width, out window_height);
 
-        try {
-            Gdk.Pixbuf pixbuf = new Gdk.Pixbuf.from_file_at_scale (path, window_width,
-                    window_height, true);
-            Gdk.cairo_set_source_pixbuf (ctx, pixbuf, 0, 0);
+        Gdk.cairo_set_source_pixbuf (ctx, pixbuf, 0, 0);
 
-            int image_width = pixbuf.get_width();
-            int image_height = pixbuf.get_height();
-            if (window_width != image_width || window_height != image_height)
-                resize(image_width, image_height);
-            
-            Gdk.Geometry geometry = Gdk.Geometry ();
-            geometry.min_aspect = (double)image_width/(double)image_height;
-            geometry.max_aspect = (double)image_width/(double)image_height;
-            set_geometry_hints (null, geometry, Gdk.WindowHints.ASPECT);
-
-        } catch (GLib.Error err) {
-            stderr.printf("Error\n");
+        int image_width = pixbuf.get_width();
+        int image_height = pixbuf.get_height();
+        if ( window_width != image_width || window_height != image_height) {
+            resize(image_width, image_height);
         }
 
         ctx.paint ();
