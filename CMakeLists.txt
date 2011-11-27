@@ -37,3 +37,5 @@ add_executable(picf ${VALA_C})
 target_link_libraries(picf ${DEPS_LIBRARIES})
 
 install (TARGETS picf DESTINATION "bin")
+install (FILES "data/picf.desktop" DESTINATION share/applications)
+install (FILES "data/picf.desktop" DESTINATION /etc/xdg/autostart)

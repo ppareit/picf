@@ -1,0 +1,15 @@
+[Desktop Entry]
+Name=PictureFrame
+GenericName=Desktop Picture Frame
+GenericName[nl_BE]=Bureaublad afbeelding
+Comment=Shows a picture frame on the desktop
+Comment[nl_BE]=Toont een afbeelding op het bureaublad
+Type=Application
+Exec=picf
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+
+
+
+
