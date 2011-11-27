@@ -20,24 +20,31 @@ using Gtk;
 using Gdk;
 using Cairo;
 
-public class PicfSettings : GLib.Settings {
-    public PicfSettings () {
-        Object(schema: "be.ppareit.picf");
+public class AppSettings {
+
+    private static GLib.Settings settings = null;
+
+    public static GLib.Settings get_default () {
+        if (settings == null) {
+            settings = new GLib.Settings ("be.ppareit.picf");
+        }
+        return settings;
     }
+
 }
-//static GLib.Settings settings = new GLib.Settings ("be.ppareit.picf");
 
 public class FloatWindow : Gtk.Window {
 
-    PicfSettings settings = new PicfSettings ();
+    private bool ignore_reposition = false;
+    private bool ignore_resize = false;
     
-    bool ignore_reposition = false;
-    bool ignore_resize = false;
+    private Pixbuf pixbuf = null;
     
-    Pixbuf pixbuf = null;
+    private GLib.Settings settings = AppSettings.get_default ();
 
     public FloatWindow () {
         Object(type: Gtk.WindowType.TOPLEVEL);
+        
         
         this.title = "picf";
         
@@ -59,7 +66,7 @@ public class FloatWindow : Gtk.Window {
                                         Stock.CANCEL, ResponseType.CANCEL,
                                         Stock.OPEN, ResponseType.ACCEPT);
             if (file_chooser.run () == ResponseType.ACCEPT) {
-                settings.set_string("path", file_chooser.get_filename ());
+                settings.set_string ("path", file_chooser.get_filename ());
             }
             file_chooser.destroy ();
         });
@@ -187,8 +194,9 @@ int main (string[] args) {
 
     Gtk.init (ref args);
     
+    GLib.Settings settings = AppSettings.get_default ();
+    
     // ensure we have a picture
-    PicfSettings settings = new PicfSettings ();
     string path = settings.get_string ("path");
     try {
         new Gdk.Pixbuf.from_file (path);
